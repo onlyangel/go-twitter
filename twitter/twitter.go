@@ -2,6 +2,8 @@ package twitter
 
 import (
 	"net/http"
+	"appengine"
+	"appengine/urlfetch"
 
 	"github.com/dghubble/sling"
 )
@@ -24,6 +26,22 @@ type Client struct {
 // NewClient returns a new Client.
 func NewClient(httpClient *http.Client) *Client {
 	base := sling.New().Client(httpClient).Base(twitterAPI)
+	return &Client{
+		sling:          base,
+		Accounts:       newAccountService(base.New()),
+		Statuses:       newStatusService(base.New()),
+		Timelines:      newTimelineService(base.New()),
+		Users:          newUserService(base.New()),
+		Followers:      newFollowerService(base.New()),
+		DirectMessages: newDirectMessageService(base.New()),
+		Streams:        newStreamService(httpClient, base.New()),
+	}
+}
+
+// NewClient returns a new Client.
+func NewClientGAE(httpClient *http.Client, ctx appengine.Context) *Client {
+	cli := urlfetch.Client(ctx)
+	base := sling.New().Client(cli).Base(twitterAPI)
 	return &Client{
 		sling:          base,
 		Accounts:       newAccountService(base.New()),
